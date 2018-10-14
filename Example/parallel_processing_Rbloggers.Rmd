@@ -1,0 +1,71 @@
+---
+title: "Example parallel processing"
+output: html_document
+---
+
+### Code efficiency
+lapply() function is used to apply a specified function to the vector or list input. The output of this function is always a list. 
+```{r}
+# single outputs
+lapply(1:5, function(x) x^2) 
+# multiple outputs
+lapply(1:5, function(x) c(x^2,x^3)) 
+```
+
+### Code efficiency
+An alternative is to use the sapply() function which generates a vector, matrix or array output. The lapply() and sapply() functions are very fast in calculation. This means that the values are calculated independently of each other. However, it is not parallel in execution.
+```{r}
+# output is a vector
+sapply(1:5, function(x) x^2)
+# output is a matrix
+sapply(1:5, function(x) c(x^2,x^3))
+```
+
+### Parallelization
+The parallel package in R can perform tasks in parallel by providing the ability to allocate cores to R. A word of caution: it is important to close the cluster at the end of execution step so that core memory is released.
+
+```{r}
+# load library for perallelization
+library(parallel)
+# find the number of cores
+no_cores <- detectCores()
+# Setup the cluster
+clust <- makeCluster(no_cores)
+# parallel version of lapply(), needs the clust argument
+parLapply(clust,1:5, function(x) c(x^2,x^3))
+# stop the cluster
+stopCluster(clust)
+
+```
+
+### Example
+The clusterExport() function: is a special command needed to change the variable scope in parallel execution. the command will send the variable to all the assigned cores in the clusters. Like there is a scopre for variables, libraries also need to be exported to all cores.
+```{r}
+library(parallel)
+no_cores <- detectCores()
+clust <- makeCluster(no_cores)
+clusterEvalQ(clust,library(randomForest))
+#Setting a base variable 
+base <- 4
+#Note that this line is required so that all cores in cluster have this variable available
+clusterExport(clust, "base")
+#Using the parSapply() function
+parSapply(clust, 1:5, function(exponent) base^exponent)
+stopCluster(clust)
+```
+
+### foreach package
+
+```{r}
+library(foreach)
+library(doParallel)
+registerDoParallel(makeCluster(no_cores))
+
+```
+
+
+
+
+
+
+
