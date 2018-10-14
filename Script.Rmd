@@ -1,0 +1,44 @@
+---
+title: "Assignment 3: parallel computing "
+author: "Stijn Hanssen"
+date: "Oktober 2018"
+output: html_document
+---
+
+### Clear working space
+First step is to make sure that the working space is empty.
+```{r}
+# clear all variables
+rm(list=ls()) 
+```
+
+### Set path working directory
+The directory path is set to the stored datasets.
+```{r}
+# set working directory
+setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing") 
+```
+
+### Load libraries
+Loading the required packages for specific functions. 
+```{r}
+
+```
+
+### Import data
+load .sdf file (change working directory). import 5000 molecules (pb), initiate list,   
+```{r}
+
+```
+
+### Parallel computing
+distribute among cores. convert smiles, export to cores, parse smiles to molecules.
+```{r}
+
+```
+
+### Plot
+distribute among cores
+```{r}
+
+```
