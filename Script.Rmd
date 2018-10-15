@@ -22,13 +22,15 @@ setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scie
 ### Load libraries
 Loading the required packages for specific functions. 
 ```{r}
+# setting working memory for this job to 8
 options(java.parameters = "-Xmx8g")
-# for proper nextElem() support
-library(itertools) 
-# access functionality of Java framework
-library(rcdk)
-# provides a parallel backend for the dopar function
-library(doParallel)
+# install pacman
+if (!require("pacman")) suppressPackageStartupMessages(install.packages("pacman"))
+# p_load: instal and load the packages
+# ittertools: for proper nextElem support
+# rcdk: acces functioality of jave framework
+# doParallel: provides parallel backend for the dopar function
+pacman::p_load("parallel","rcdk","itertools","doParallel")
 ```
 
 ### Import data
@@ -37,22 +39,22 @@ library(doParallel)
 # total amount molecules in sdf file
 max_n_molecules = 377550
 # amount molecules imported
-n = 1000
+n = 20
 # iload.molecules: iterating version of loader
 iter <- iload.molecules('C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing/aid624202.sdf', type='sdf')
 # text progress bar
 pb <- txtProgressBar(min = 0, max = n , style = 3)
 # initiate value
-counter = 0 
+step = 0 
 # set a list
 mols = list()
 # while loop to iterate until n is reached
 while(hasNext(iter)) {
-counter = counter + 1
+step = step + 1
 # generic function to prodcue values, save values in mols    
-    mols[[counter]] <- nextElem(iter)
-setTxtProgressBar(pb,counter)
-if(counter == n){
+    mols[[step]] <- nextElem(iter)
+setTxtProgressBar(pb,step)
+if(step == n){
     break
   }
 }
@@ -61,7 +63,7 @@ close(pb)
 
 ### list descriptors
 ```{r}
-# list descriptors wanted to calculate
+# list of descriptors wanted to calculate
 descNames <- unique(unlist(sapply(get.desc.categories()[2:4], get.desc.names)))
 ```
 
@@ -75,13 +77,34 @@ smiles = lapply(mols,get.smiles)
 ```
 
 ### Parallel computing
-distribute among cores. convert smiles, export to cores, parse smiles to molecules.
+
 ```{r}
+# create a list to store the time
+time = list()
+# set total amount of cores that can be used
+nCores <- detectCores() - 1
+# for loop that returns time of calculation for various amounts of cores
+# set minimum number of cores to 2
+for(numcores in 2:nCores){
+# set copies to run in parallel and communicate over the sockets
+    cl <- makeCluster(numcores)     
+# clusterExport: that all cores in cluster have the variable available
+    clusterExport(cl,"descNames") 
+    clusterExport(cl,"smiles")
+  
+# distribute the packages to each core
+    clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
+# make the process parallel
+    registerDoParallel(cl)
+    time[numcores] <- system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]
+# shut down the parallel computing
+    stopCluster(cl)
+}
 
 ```
 
 ### Plot
 
 ```{r}
-
+plot(unlist(time),xlab="cores used",ylab="time (s)",main=paste0("Cores and time the computer used/took to calculate descriptors for ",n," molecules"),type='b')
 ```
