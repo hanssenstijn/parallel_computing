@@ -22,7 +22,7 @@ setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scie
 ### Load libraries
 Loading the required packages for specific functions. 
 ```{r}
-# setting working memory for this job to 8
+# setting working memory for this job to 8gb
 options(java.parameters = "-Xmx8g")
 # install pacman
 if (!require("pacman")) suppressPackageStartupMessages(install.packages("pacman"))
@@ -39,7 +39,7 @@ pacman::p_load("parallel","rcdk","itertools","doParallel")
 # total amount molecules in sdf file
 max_n_molecules = 377550
 # amount molecules imported
-n = 20
+n = 1000
 # iload.molecules: iterating version of loader
 iter <- iload.molecules('C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing/aid624202.sdf', type='sdf')
 # text progress bar
@@ -62,6 +62,7 @@ close(pb)
 ```
 
 ### list descriptors
+
 ```{r}
 # list of descriptors wanted to calculate
 descNames <- unique(unlist(sapply(get.desc.categories()[2:4], get.desc.names)))
@@ -76,35 +77,62 @@ mols = unlist(mols)
 smiles = lapply(mols,get.smiles)
 ```
 
-### Parallel computing
+### Parallel version lapply: foreach 3 cores
 
 ```{r}
-# create a list to store the time
-time = list()
 # set total amount of cores that can be used
 nCores <- detectCores() - 1
-# for loop that returns time of calculation for various amounts of cores
-# set minimum number of cores to 2
-for(numcores in 2:nCores){
 # set copies to run in parallel and communicate over the sockets
-    cl <- makeCluster(numcores)     
+cl <- makeCluster(nCores)     
 # clusterExport: that all cores in cluster have the variable available
-    clusterExport(cl,"descNames") 
-    clusterExport(cl,"smiles")
-  
+clusterExport(cl,"descNames") 
+clusterExport(cl,"smiles")
 # distribute the packages to each core
-    clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
+clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
 # make the process parallel
-    registerDoParallel(cl)
-    time[numcores] <- system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]
-# shut down the parallel computing
-    stopCluster(cl)
-}
+registerDoParallel(cl)
+
+system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]    
+ 
+stopImplicitCluster()
 
 ```
 
-### Plot
+### Parallel version lapply: foreach 2 cores
 
 ```{r}
-plot(2:3,unlist(time),xlab="cores used",ylab="time (s)",main=paste0("Cores and time the computer used/took to calculate descriptors for ",n," molecules"),type='b')
+# set total amount of cores that can be used
+nCores <- detectCores() - 2
+# set copies to run in parallel and communicate over the sockets
+cl <- makeCluster(nCores)     
+# clusterExport: that all cores in cluster have the variable available
+clusterExport(cl,"descNames") 
+clusterExport(cl,"smiles")
+# distribute the packages to each core
+clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
+# make the process parallel
+registerDoParallel(cl)
+
+system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]    
+ 
+stopImplicitCluster()
+
+```
+
+### Test: arallel version lapply: parLapply
+
+```{r}
+# set total amount of cores that can be used
+nCores <- detectCores() - 1
+# set copies to run in parallel and communicate over the sockets
+cl <- makeCluster(nCores)     
+# clusterExport: that all cores in cluster have the variable available
+clusterExport(cl,"descNames") 
+clusterExport(cl,"smiles")
+# distribute the packages to each core
+clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
+# make the process parallel
+x = function(i) {eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F)[3] }
+system.time(parLapply(cl,seq_len(smiles),x))
+stopCluster(cl)
 ```
