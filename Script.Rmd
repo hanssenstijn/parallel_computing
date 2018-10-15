@@ -59,6 +59,15 @@ if(counter == n){
 close(pb)
 ```
 
+### Convert into smiles
+
+```{r}
+# produce vector containing the atomic components
+mols = unlist(mols)
+# function generate smiels representation of IAtomContainer object
+smiles = lapply(mols,get.smiles)
+```
+
 ### Parallel computing
 distribute among cores. convert smiles, export to cores, parse smiles to molecules.
 ```{r}
@@ -66,7 +75,7 @@ distribute among cores. convert smiles, export to cores, parse smiles to molecul
 ```
 
 ### Plot
-distribute among cores
+
 ```{r}
 
 ```
