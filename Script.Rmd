@@ -106,5 +106,5 @@ for(numcores in 2:nCores){
 ### Plot
 
 ```{r}
-plot(unlist(time),xlab="cores used",ylab="time (s)",main=paste0("Cores and time the computer used/took to calculate descriptors for ",n," molecules"),type='b')
+plot(2:3,unlist(time),xlab="cores used",ylab="time (s)",main=paste0("Cores and time the computer used/took to calculate descriptors for ",n," molecules"),type='b')
 ```
