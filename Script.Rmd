@@ -23,29 +23,38 @@ setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scie
 Loading the required packages for specific functions. 
 ```{r}
 options(java.parameters = "-Xmx8g")
-library(itertools) # for proper nextElem() support
+# for proper nextElem() support
+library(itertools) 
+# access functionality of Java framework
 library(rcdk)
+# provides a parallel backend for the dopar function
 library(doParallel)
 ```
 
 ### Import data
-load .sdf file (change working directory). import 5000 molecules (pb), initiate list,   
+
 ```{r}
-selectedSusbtanceIDs = qsarSmallData[,"SID"]
-iter <- iload.molecules('C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing', type='sdf')
-pb <- txtProgressBar(min = 0, max = 377550, style = 3)
-molsDone = 0
-hitsFound = 0
+# total amount molecules in sdf file
+max_n_molecules = 377550
+# amount molecules imported
+n = 1000
+# iload.molecules: iterating version of loader
+iter <- iload.molecules('C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing/aid624202.sdf', type='sdf')
+# text progress bar
+pb <- txtProgressBar(min = 0, max = n , style = 3)
+# initiate value
+counter = 0 
+# set a list
 mols = list()
+# while loop to iterate until n is reached
 while(hasNext(iter)) {
-  mol <- nextElem(iter)
-  sdfSID = get.property(mol, "PUBCHEM_SUBSTANCE_ID")
-  if (sdfSID %in% selectedSusbtanceIDs) {
-    hitsFound = hitsFound + 1
-    mols[[hitsFound]] = mol
+counter = counter + 1
+# generic function to prodcue values, save values in mols    
+    mols[[counter]] <- nextElem(iter)
+setTxtProgressBar(pb,counter)
+if(counter == n){
+    break
   }
-  molsDone = molsDone + 1
-  setTxtProgressBar(pb, molsDone)
 }
 close(pb)
 ```
