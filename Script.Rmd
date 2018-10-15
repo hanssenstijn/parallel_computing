@@ -22,13 +22,32 @@ setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scie
 ### Load libraries
 Loading the required packages for specific functions. 
 ```{r}
-
+options(java.parameters = "-Xmx8g")
+library(itertools) # for proper nextElem() support
+library(rcdk)
+library(doParallel)
 ```
 
 ### Import data
 load .sdf file (change working directory). import 5000 molecules (pb), initiate list,   
 ```{r}
-
+selectedSusbtanceIDs = qsarSmallData[,"SID"]
+iter <- iload.molecules('C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing', type='sdf')
+pb <- txtProgressBar(min = 0, max = 377550, style = 3)
+molsDone = 0
+hitsFound = 0
+mols = list()
+while(hasNext(iter)) {
+  mol <- nextElem(iter)
+  sdfSID = get.property(mol, "PUBCHEM_SUBSTANCE_ID")
+  if (sdfSID %in% selectedSusbtanceIDs) {
+    hitsFound = hitsFound + 1
+    mols[[hitsFound]] = mol
+  }
+  molsDone = molsDone + 1
+  setTxtProgressBar(pb, molsDone)
+}
+close(pb)
 ```
 
 ### Parallel computing
