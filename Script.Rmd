@@ -1,5 +1,5 @@
 ---
-title: "Assignment 3: parallel computing "
+title: "Assignment 3: parallel computing"
 author: "Stijn Hanssen"
 date: "Oktober 2018"
 output: html_document
@@ -13,14 +13,14 @@ rm(list=ls())
 ```
 
 ### Set path working directory
-The directory path is set to the stored datasets.
+The directory path is set to the stored dataset.
 ```{r}
 # set working directory
 setwd("C:/Users/stijn/Desktop/Master systems biology/Systems biology year 2/scientific computing/parallelprocessing") 
 ```
 
-### Load libraries
-Loading the required packages for specific functions. 
+### Load packages
+Setting the size memory for the project and loading the required packages for specific functions. If the packaged aren't present they will be automatically be downloaded.
 ```{r}
 # setting working memory for this job to 8gb
 options(java.parameters = "-Xmx8g")
@@ -34,7 +34,7 @@ pacman::p_load("parallel","rcdk","itertools","doParallel")
 ```
 
 ### Import data
-
+The `aid624202.sdf` will be loaded to compute the descriptor matrix. The total number of molecules is `377550` but for this project only a subset will be used (variable `n`). In the `while` loop and iteration will take place which will add the molecules one by one to the mols list. This will be done until the last molecule of the subset is reached
 ```{r}
 # total amount molecules in sdf file
 max_n_molecules = 377550
@@ -54,6 +54,7 @@ step = step + 1
 # generic function to prodcue values, save values in mols    
     mols[[step]] <- nextElem(iter)
 setTxtProgressBar(pb,step)
+# break the iteration when the last molecules has been imported
 if(step == n){
     break
   }
@@ -62,14 +63,14 @@ close(pb)
 ```
 
 ### list descriptors
-
+The list of descriptors wanted to calculate are depicted in this line of R-code
 ```{r}
-# list of descriptors wanted to calculate
+# return the descriptor categories that are available
 descNames <- unique(unlist(sapply(get.desc.categories()[2:4], get.desc.names)))
 ```
 
 ### Convert into smiles
-
+In order to make the parallel computing work, we converted the molecules into smiles. 
 ```{r}
 # produce vector containing the atomic components
 mols = unlist(mols)
@@ -78,7 +79,7 @@ smiles = lapply(mols,get.smiles)
 ```
 
 ### Parallel version lapply: foreach 3 cores
-
+The data will be distributed among multiple cores in order to calculate the molecular descriptors. System time will be calculate for the reason that we want to compare the computation time beteween using 2 or 3 cores when calculating the descriptors. 
 ```{r}
 # set total amount of cores that can be used
 nCores <- detectCores() - 1
@@ -91,26 +92,21 @@ clusterExport(cl,"smiles")
 clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
 # make the process parallel
 registerDoParallel(cl)
-
+# results will be combined by row
+# eval.desc: evaluated the specified molecular descriptors for a molecule
 system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]    
- 
+# close the created cluster
 stopImplicitCluster()
 
 ```
 
 ### Parallel version lapply: foreach 2 cores
-
 ```{r}
-# set total amount of cores that can be used
 nCores <- detectCores() - 2
-# set copies to run in parallel and communicate over the sockets
 cl <- makeCluster(nCores)     
-# clusterExport: that all cores in cluster have the variable available
 clusterExport(cl,"descNames") 
 clusterExport(cl,"smiles")
-# distribute the packages to each core
 clusterEvalQ(cl, pacman::p_load("parallel","rcdk","itertools","doParallel"))
-# make the process parallel
 registerDoParallel(cl)
 
 system.time(foreach(i=1:n,.combine=rbind) %dopar% eval.desc(parse.smiles(smiles[[i]]),descNames,verbose=F))[3]    
@@ -120,7 +116,7 @@ stopImplicitCluster()
 ```
 
 ### Thread safe descriptors
-all.equal
+
 ```{r}
 
 ```
