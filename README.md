@@ -7,3 +7,6 @@ The structured data file that has been used contains molecules information relat
 For the reason of computational time and power, only a subset of molecules is selected too in parallel compute their discriptors. This calculation was done using half of the available cores (n = 2) and maximum minus 1 (n = 3).
 
 The script will convert the molecules into smiles and then by each different core will the smiles be parse back into molecules. This has to be done in order to make the parallel computing to happen.
+
+The licenses for the used R packages can be founde here: [parallel & doParallel](https://cran.r-project.org/web/licenses/GPL-2), [rcdk](https://cran.r-project.org/web/licenses/LGPL-3) and
+[itertools](https://cran.r-project.org/web/licenses/GPL-2)
