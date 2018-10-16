@@ -119,6 +119,13 @@ stopImplicitCluster()
 
 ```
 
+### Thread safe descriptors
+all.equal
+```{r}
+
+```
+
+
 ### Test: arallel version lapply: parLapply
 
 ```{r}
